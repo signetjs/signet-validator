@@ -1,0 +1,28 @@
+{
+  "name": "signet-validator",
+  "version": "1.0.0",
+  "description": "Value type validation package for signet",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node ./node_modules/mocha/bin/mocha ./test/*.test.js"
+  },
+  "keywords": [
+    "types",
+    "signet",
+    "validation"
+  ],
+  "author": "Chris Stead <cmstead@gmail.com> (http://www.chrisstead.com/)",
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "approvals": "^1.3.0",
+    "chai": "^3.5.0",
+    "mocha": "^3.1.2",
+    "signet-parser": "../signet-parser",
+    "signet-registrar": "../signet-registrar",
+    "signet-assembler": "../signet-assembler",
+    "signet-typelog": "../signet-typelog"
+  }
+}
