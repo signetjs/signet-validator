@@ -36,6 +36,10 @@ describe('Signet value type validator', function () {
 
             return isNumber(value) && min <= value && value <= max;
         });
+
+        typelog.defineSubtypeOf('number')('int', function (value) {
+            return Math.floor(value) === value;
+        });
     });
 
     describe('validateType', function () {
@@ -73,6 +77,13 @@ describe('Signet value type validator', function () {
         it('should succeed on optional checks', function () {
             var signatureTree = parser.parseSignature('string, [number] => object');
             var result = validator.validateArguments(signatureTree[0])(['foo']);
+
+            assert.strictEqual(result, null);
+        });
+
+        it('should succeed on signature checks with optional subtypes', function () {
+            var signatureTree = parser.parseSignature('int, [int] => *');
+            var result = validator.validateArguments(signatureTree[0])([5]);
 
             assert.strictEqual(result, null);
         });
