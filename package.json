@@ -1,6 +1,6 @@
 {
   "name": "signet-validator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Value type validation package for signet",
   "main": "index.js",
   "directories": {
