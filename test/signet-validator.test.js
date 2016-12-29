@@ -21,6 +21,7 @@ describe('Signet value type validator', function () {
         registrar = signetRegistrar();
         var typelog = signetTypelog(registrar, parser);
 
+        typelog.define('boolean', function (value) { return typeof value === 'boolean'; });
         typelog.define('string', function (value) { return typeof value === 'string'; });
         typelog.define('number', function (value) { return typeof value === 'number'; });
         typelog.define('object', function (value) { return typeof value === 'object'; });
@@ -74,6 +75,13 @@ describe('Signet value type validator', function () {
             this.verify(prettyJson(result));
         });
 
+        it('should return full type string on failure', function () {
+            var signatureTree = parser.parseSignature('rangedNumber<1;5> => *');
+            var result = validator.validateArguments(signatureTree[0])([-3]);
+
+            this.verify(prettyJson(result));
+        });
+
         it('should succeed on optional checks', function () {
             var signatureTree = parser.parseSignature('string, [number] => object');
             var result = validator.validateArguments(signatureTree[0])(['foo']);
@@ -88,16 +96,23 @@ describe('Signet value type validator', function () {
             assert.strictEqual(result, null);
         });
 
-        it('should fail if value exists and fails optional check', function () {
-            var signatureTree = parser.parseSignature('string, [number] => object');
-            var result = validator.validateArguments(signatureTree[0])(['foo', 'bar']);
+        it('should succeed on signature checks with satisfied optional types and extra arguments', function () {
+            var signatureTree = parser.parseSignature('int, [int] => *');
+            var result = validator.validateArguments(signatureTree[0])([5, 6, 'foo', true]);
+
+            assert.strictEqual(result, null);
+        });
+
+        it('should fail if last argument is optional and type does not match', function () {
+            var signatureTree = parser.parseSignature('int, [int] => *');
+            var result = validator.validateArguments(signatureTree[0])([5, 'foo']);
 
             this.verify(prettyJson(result));
         });
 
-        it('should return full type string on failure', function () {
-            var signatureTree = parser.parseSignature('rangedNumber<1;5> => *');
-            var result = validator.validateArguments(signatureTree[0])([-3]);
+        it('should fail if value exists and fails optional check', function () {
+            var signatureTree = parser.parseSignature('string, [number], boolean => object');
+            var result = validator.validateArguments(signatureTree[0])(['foo', 'bar']);
 
             this.verify(prettyJson(result));
         });
