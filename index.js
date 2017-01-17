@@ -16,7 +16,8 @@ var signetValidator = (function () {
         }
 
         function validateType(typeDef) {
-            return typelog.isTypeOf(typeDef);
+            var hasTypeCheck = typeof typeDef.typeCheck === 'function';
+            return hasTypeCheck ? typeDef.typeCheck : typelog.isTypeOf(typeDef);
         }
 
         function validateCurrentValue(typeList, argumentList) {
