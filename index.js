@@ -33,9 +33,43 @@ var signetValidator = (function () {
             return accepted ? validateNext(nextArgs) : [assembler.assembleType(typeDef), argument];
         }
 
+        function checkDependentTypes(dependent, namedArgs, validationState) {
+            var newValidationState = null;
+
+            if(validationState === null && dependent !== null) {
+                console.log('starting check logic', namedArgs);
+            }
+
+            return newValidationState === null ? validationState : newValidationState;
+        }
+
+        function buildNamedArgs(typeList, argumentList) {
+            var result = {};
+            var typeLength = typeList.length;
+            var typeNode;
+            var typeName;
+
+            for(var i = 0; i < typeLength; i++) {
+                typeNode = typeList[i];
+                typeName = typeNode.name;
+                result[typeName] = {
+                    name: typeName, 
+                    value: argumentList[i],
+                    typeNode: typeList[i]
+                };
+            }
+
+            return result;
+        }
+
         function validateArguments(typeList) {
+            var dependent = typeList.dependent;
+
             return function (argumentList) {
-                return typeList.length === 0 ? null : validateCurrentValue(typeList, argumentList);
+                var namedArgs = buildNamedArgs(typeList, argumentList);
+                var validationState = typeList.length === 0 ? null : validateCurrentValue(typeList, argumentList);
+                
+                return checkDependentTypes(dependent, namedArgs, validationState);
             };
         }
 

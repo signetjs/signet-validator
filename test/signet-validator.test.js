@@ -117,6 +117,13 @@ describe('Signet value type validator', function () {
             this.verify(prettyJson(result));
         });
 
+        it('should fail if values pass, but dependent type check fails', function () {
+            var signatureTree = parser.parseSignature('A < B :: A:int, B:int => array<int>');
+            var result = validator.validateArguments(signatureTree[0])([6, 5]);
+
+            this.verify(prettyJson(result));
+        });
+
     });
 
 });
