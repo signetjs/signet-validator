@@ -26,6 +26,8 @@ describe('Signet value type validator', function () {
         typelog.define('number', function (value) { return typeof value === 'number'; });
         typelog.define('object', function (value) { return typeof value === 'object'; });
 
+        typelog.defineDependentOperatorOn('number')('<', function (a, b){ return a < b; });
+        typelog.defineDependentOperatorOn('number')('>', function (a, b){ return a > b; });
 
         validator = signetValidator(typelog, assembler);
 
@@ -122,6 +124,13 @@ describe('Signet value type validator', function () {
             var result = validator.validateArguments(signatureTree[0])([6, 5]);
 
             this.verify(prettyJson(result));
+        });
+
+        it('should succeed if dependent types are satisfied', function () {
+            var signatureTree = parser.parseSignature('A < B :: A:int, B:int => array<int>');
+            var result = validator.validateArguments(signatureTree[0])([4, 5]);
+
+            assert.equal(result, null);
         });
 
     });

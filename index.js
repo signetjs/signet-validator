@@ -11,6 +11,10 @@ var signetValidator = (function () {
 
     return function (typelog, assembler) {
 
+        function isObjectInstance (value) {
+            return typeof value === 'object' && value !== null;
+        }
+
         function validateOptional(typeDef, argument, typeList) {
             return typeDef.optional && (typeList.length > 1 || typeof argument === 'undefined');
         }
@@ -33,11 +37,47 @@ var signetValidator = (function () {
             return accepted ? validateNext(nextArgs) : [assembler.assembleType(typeDef), argument];
         }
 
+        function getValidationState(left, right, operatorDef) {
+            var validationState = null;
+
+            if(!operatorDef.operation(left.value, right.value)){
+                var typeInfo = [left.name, operatorDef.operator, right.name];
+                var typeDef = '[' + typeInfo.join(' ') + ']';
+                var valueInfo = [left.name, '=', left.value, 'and', right.name, '=', right.value];
+
+                validationState = [typeDef, valueInfo.join(' ')];
+            }
+
+            return validationState;
+        }
+
+        function alwaysFalse (){
+            return false;
+        }
+
+        function getDependentOperator (typeName, operator){
+            var dependentOperator = typelog.getDependentOperatorOn(typeName)(operator);
+
+            if(dependentOperator === null) {
+                dependentOperator = {
+                    operator: operator,
+                    operation: alwaysFalse
+                };
+            }
+
+            return dependentOperator;
+        }
+
         function checkDependentTypes(dependent, namedArgs, validationState) {
             var newValidationState = null;
 
-            if(validationState === null && dependent !== null) {
-                console.log('starting check logic', namedArgs);
+            if(validationState === null && isObjectInstance(dependent)) {
+                var left = namedArgs[dependent.left];
+                var right = namedArgs[dependent.right];
+
+                var operatorDef = getDependentOperator(left.typeNode.type, dependent.operator);
+
+                newValidationState = getValidationState(left, right, operatorDef);
             }
 
             return newValidationState === null ? validationState : newValidationState;
