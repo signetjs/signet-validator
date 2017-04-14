@@ -42,7 +42,7 @@ var signetValidator = (function () {
 
             if(!operatorDef.operation(left.value, right.value)){
                 var typeInfo = [left.name, operatorDef.operator, right.name];
-                var typeDef = '[' + typeInfo.join(' ') + ']';
+                var typeDef = typeInfo.join(' ');
                 var valueInfo = [left.name, '=', left.value, 'and', right.name, '=', right.value];
 
                 validationState = [typeDef, valueInfo.join(' ')];
