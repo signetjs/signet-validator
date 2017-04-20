@@ -29,7 +29,13 @@ describe('Signet value type validator', function () {
         typelog.defineDependentOperatorOn('number')('<', function (a, b){ return a < b; });
         typelog.defineDependentOperatorOn('number')('>', function (a, b){ return a > b; });
 
-        validator = signetValidator(typelog, assembler);
+        typelog.defineDependentOperatorOn('*')('typeof', function (a, typeCheck){
+            return typeCheck(a);
+        });
+
+        typelog.defineDependentOperatorOn('*')('teston', function (a, b) { return false; });
+
+        validator = signetValidator(typelog, assembler, parser);
 
         var isNumber = validator.validateType(parser.parseType('number'));
 
@@ -131,6 +137,20 @@ describe('Signet value type validator', function () {
             var result = validator.validateArguments(signatureTree[0])([4, 5]);
 
             assert.equal(result, null);
+        });
+
+        it('should attempt to parse and pass type if value is not a named type', function () {
+            var signatureTree = parser.parseSignature('A typeof string :: A:int, B:int => array<int>');
+            var result = validator.validateArguments(signatureTree[0])([4, 5]);
+
+            this.verify(prettyJson(result));
+        });
+
+        it('should pass uninterpreted value if value is not a type', function () {
+            var signatureTree = parser.parseSignature('A teston foo :: A:int, B:int => array<int>');
+            var result = validator.validateArguments(signatureTree[0])([4, 5]);
+
+            this.verify(prettyJson(result));
         });
 
     });

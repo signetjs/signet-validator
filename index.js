@@ -9,9 +9,9 @@ var signetValidator = (function () {
         return list.slice(1);
     }
 
-    return function (typelog, assembler) {
+    return function (typelog, assembler, parser) {
 
-        function isObjectInstance (value) {
+        function isObjectInstance(value) {
             return typeof value === 'object' && value !== null;
         }
 
@@ -40,7 +40,7 @@ var signetValidator = (function () {
         function getValidationState(left, right, operatorDef) {
             var validationState = null;
 
-            if(!operatorDef.operation(left.value, right.value, left.typeNode, right.typeNode)){
+            if (!operatorDef.operation(left.value, right.value, left.typeNode, right.typeNode)) {
                 var typeInfo = [left.name, operatorDef.operator, right.name];
                 var typeDef = typeInfo.join(' ');
                 var valueInfo = [left.name, '=', left.value, 'and', right.name, '=', right.value];
@@ -51,14 +51,14 @@ var signetValidator = (function () {
             return validationState;
         }
 
-        function alwaysFalse (){
+        function alwaysFalse() {
             return false;
         }
 
-        function getDependentOperator (typeName, operator){
+        function getDependentOperator(typeName, operator) {
             var dependentOperator = typelog.getDependentOperatorOn(typeName)(operator);
 
-            if(dependentOperator === null) {
+            if (dependentOperator === null) {
                 dependentOperator = {
                     operator: operator,
                     operation: alwaysFalse
@@ -68,12 +68,50 @@ var signetValidator = (function () {
             return dependentOperator;
         }
 
+        function buildTypeObj(typeName) {
+            var typeDef = parser.parseType(typeName);
+            var isCorrectType = typelog.isTypeOf(typeDef);
+
+            function typeCheck(value) {
+                return isCorrectType(value);
+            }
+
+            typeCheck.toString = function () {
+                return '[function typePredicate]';
+            }
+
+            return {
+                name: typeName,
+                value: typeCheck,
+                typeNode: typeDef
+            };
+
+        }
+
+        function buildValueObj(value) {
+            return {
+                name: value,
+                value: value,
+                typeNode: {}
+            }
+        }
+
+        function getRightArg(namedArgs, right) {
+            var value = namedArgs[right];
+
+            if (typeof value === 'undefined') {
+                value = typelog.isType(right) ? buildTypeObj(right) : buildValueObj(right);
+            }
+
+            return value;
+        }
+
         function checkDependentTypes(dependent, namedArgs, validationState) {
             var newValidationState = null;
 
-            if(validationState === null && isObjectInstance(dependent)) {
+            if (validationState === null && isObjectInstance(dependent)) {
                 var left = namedArgs[dependent.left];
-                var right = namedArgs[dependent.right];
+                var right = getRightArg(namedArgs, dependent.right);
 
                 var operatorDef = getDependentOperator(left.typeNode.type, dependent.operator);
 
@@ -89,11 +127,11 @@ var signetValidator = (function () {
             var typeNode;
             var typeName;
 
-            for(var i = 0; i < typeLength; i++) {
+            for (var i = 0; i < typeLength; i++) {
                 typeNode = typeList[i];
                 typeName = typeNode.name;
                 result[typeName] = {
-                    name: typeName, 
+                    name: typeName,
                     value: argumentList[i],
                     typeNode: typeList[i]
                 };
@@ -108,7 +146,7 @@ var signetValidator = (function () {
             return function (argumentList) {
                 var namedArgs = buildNamedArgs(typeList, argumentList);
                 var validationState = typeList.length === 0 ? null : validateCurrentValue(typeList, argumentList);
-                
+
                 return checkDependentTypes(dependent, namedArgs, validationState);
             };
         }

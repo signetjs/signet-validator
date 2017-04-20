@@ -1,0 +1,4 @@
+[
+    "A typeof string",
+    "A = 4 and string = [function typePredicate]"
+]
