@@ -4,7 +4,7 @@ var assert = require('chai').assert;
 var signetValidator = require('../index');
 var signetRegistrar = require('signet-registrar');
 var signetTypelog = require('signet-typelog');
-var parser = require('signet-parser');
+var signetParser = require('signet-parser');
 var assembler = require('signet-assembler');
 var approvals = require('./utils/approvals.config');
 
@@ -16,9 +16,11 @@ describe('Signet value type validator', function () {
 
     var registrar;
     var validator;
+    var parser;
 
     beforeEach(function () {
         registrar = signetRegistrar();
+        parser = signetParser();
         var typelog = signetTypelog(registrar, parser);
 
         typelog.define('boolean', function (value) { return typeof value === 'boolean'; });
