@@ -135,14 +135,14 @@ describe('Signet value type validator', function () {
         });
 
         it('should succeed if dependent types are satisfied', function () {
-            var signatureTree = parser.parseSignature('A < B :: A:int, B:int => array<int>');
-            var result = validator.validateArguments(signatureTree[0])([4, 5]);
+            var signatureTree = parser.parseSignature('A < B, B < C :: A:int, B:int, C:int => array<int>');
+            var result = validator.validateArguments(signatureTree[0])([4, 5, 6]);
 
             assert.equal(result, null);
         });
 
         it('should attempt to parse and pass type if value is not a named type', function () {
-            var signatureTree = parser.parseSignature('A typeof string :: A:int, B:int => array<int>');
+            var signatureTree = parser.parseSignature('A typeof int, B typeof string :: A:int, B:int => array<int>');
             var result = validator.validateArguments(signatureTree[0])([4, 5]);
 
             this.verify(prettyJson(result));

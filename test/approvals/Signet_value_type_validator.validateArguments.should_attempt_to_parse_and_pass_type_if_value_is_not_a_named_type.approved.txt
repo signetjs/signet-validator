@@ -1,4 +1,4 @@
 [
-    "A typeof string",
-    "A = 4 and string = [function typePredicate]"
+    "B typeof string",
+    "B = 5 and string = [function typePredicate]"
 ]
