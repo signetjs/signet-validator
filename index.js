@@ -11,10 +11,6 @@ var signetValidator = (function () {
 
     return function (typelog, assembler, parser) {
 
-        function isObjectInstance(value) {
-            return typeof value === 'object' && value !== null;
-        }
-
         function validateOptional(typeDef, argument, typeList) {
             return typeDef.optional && (typeList.length > 1 || typeof argument === 'undefined');
         }
