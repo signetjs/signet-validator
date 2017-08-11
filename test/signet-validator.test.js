@@ -6,13 +6,13 @@ var signetRegistrar = require('signet-registrar');
 var signetTypelog = require('signet-typelog');
 var signetParser = require('signet-parser');
 var assembler = require('signet-assembler');
-var approvals = require('./utils/approvals.config');
 
 function prettyJson(value) {
     return JSON.stringify(value, null, 4);
 }
 
 describe('Signet value type validator', function () {
+    require('./utils/approvals.config');
 
     var registrar;
     var validator;
@@ -28,14 +28,14 @@ describe('Signet value type validator', function () {
         typelog.define('number', function (value) { return typeof value === 'number'; });
         typelog.define('object', function (value) { return typeof value === 'object'; });
 
-        typelog.defineDependentOperatorOn('number')('<', function (a, b){ return a < b; });
-        typelog.defineDependentOperatorOn('number')('>', function (a, b){ return a > b; });
+        typelog.defineDependentOperatorOn('number')('<', function (a, b) { return a < b; });
+        typelog.defineDependentOperatorOn('number')('>', function (a, b) { return a > b; });
 
-        typelog.defineDependentOperatorOn('*')('typeof', function (a, typeCheck){
+        typelog.defineDependentOperatorOn('*')('typeof', function (a, typeCheck) {
             return typeCheck(a);
         });
 
-        typelog.defineDependentOperatorOn('*')('teston', function (a, b) { return false; });
+        typelog.defineDependentOperatorOn('*')('teston', function (a, b) { return (a, b, false); });
 
         validator = signetValidator(typelog, assembler, parser);
 
@@ -148,13 +148,88 @@ describe('Signet value type validator', function () {
             this.verify(prettyJson(result));
         });
 
-        it('should pass uninterpreted value if value is not a type', function () {
-            var signatureTree = parser.parseSignature('A teston foo :: A:int, B:int => array<int>');
-            var result = validator.validateArguments(signatureTree[0])([4, 5]);
+        it('should interpret type checks across curried functions', function () {
+            var signatureTree = parser.parseSignature('A < B :: A:int => B:int => array<int>');
+
+            signatureTree[1]['environment'] = {
+                A: {
+                    name: 'A',
+                    value: 5,
+                    typeNode: parser.parseType('A:int')
+                }
+            };
+
+            signatureTree[1].dependent = [
+                    {
+                        left: 'A',
+                        right: 'B',
+                        operator: '<'
+                    }
+                ]
+
+            var result = validator.validateArguments(signatureTree[1])([4]);
 
             this.verify(prettyJson(result));
+        });
+
+        it('should pass dependent check when all variables are not yet present', function () {
+            var signatureTree = parser.parseSignature('A < B :: A:int => B:int => array<int>');
+
+            var result = validator.validateArguments(signatureTree[0])([4]);
+
+            assert.equal(null, result);
+        });
+
+        it('should support directly provided environment table', function () {
+            var signatureTree = parser.parseSignature('A < B :: A:int => B:int => array<int>');
+
+            const environmentTable = {
+                A: {
+                    name: 'A',
+                    value: 5,
+                    typeNode: parser.parseType('A:int')
+                }
+            };
+
+            signatureTree[1].dependent = [
+                    {
+                        left: 'A',
+                        right: 'B',
+                        operator: '<'
+                    }
+                ]
+
+            var result = validator.validateArguments(signatureTree[1], environmentTable)([4]);
+
+            this.verify(prettyJson(result));
+        });
+
+        it('should throw an error if user tries to mutate an existing variable', function () {
+            var signatureTree = parser.parseSignature('A < B :: A:int => A:int => array<int>');
+
+            const environmentTable = {
+                A: {
+                    name: 'A',
+                    value: 5,
+                    typeNode: parser.parseType('A:int')
+                }
+            };
+
+            signatureTree[1].dependent = [
+                    {
+                        left: 'A',
+                        right: 'B',
+                        operator: '<'
+                    }
+                ]
+
+            assert.throws(validator.validateArguments(signatureTree[1], environmentTable).bind(null, [4]));
         });
 
     });
 
 });
+
+if (typeof global.runQuokkaMochaBdd === 'function') {
+    runQuokkaMochaBdd();
+}

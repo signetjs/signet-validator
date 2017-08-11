@@ -84,19 +84,11 @@ var signetValidator = (function () {
 
         }
 
-        function buildValueObj(value) {
-            return {
-                name: value,
-                value: value,
-                typeNode: {}
-            }
-        }
-
         function getRightArg(namedArgs, right) {
             var value = namedArgs[right];
 
-            if (typeof value === 'undefined') {
-                value = typelog.isType(right) ? buildTypeObj(right) : buildValueObj(right);
+            if (typeof value === 'undefined' && typelog.isType(right)) {
+                value = buildTypeObj(right);
             }
 
             return value;
@@ -104,12 +96,16 @@ var signetValidator = (function () {
 
         function checkDependentTypes(namedArgs) {
             return function (dependent, validationState) {
+                var left = namedArgs[dependent.left];
+                var right = getRightArg(namedArgs, dependent.right);
+
                 var newValidationState = null;
 
-                if (validationState === null) {
-                    var left = namedArgs[dependent.left];
-                    var right = getRightArg(namedArgs, dependent.right);
+                var namedValuesExist =
+                    typeof left !== 'undefined'
+                    && typeof right !== 'undefined';
 
+                if (validationState === null && namedValuesExist) {
                     var operatorDef = getDependentOperator(left.typeNode.type, dependent.operator);
 
                     newValidationState = getValidationState(left, right, operatorDef);
@@ -119,8 +115,8 @@ var signetValidator = (function () {
             };
         }
 
-        function buildNamedArgs(typeList, argumentList) {
-            var result = {};
+        function buildEnvironmentTable(typeList, argumentList, environment) {
+            var result = typeof environment === 'undefined' ? {} : environment;
             var typeLength = typeList.length;
             var typeNode;
             var typeName;
@@ -128,6 +124,18 @@ var signetValidator = (function () {
             for (var i = 0; i < typeLength; i++) {
                 typeNode = typeList[i];
                 typeName = typeNode.name;
+
+                if (typeName === null) {
+                    continue;
+                }
+
+                if (typeof result[typeName] !== 'undefined') {
+                    var errorMessage = 'Signet evaluation error: '
+                        + 'Cannot overwrite value in existing variable: "'
+                        + typeName + '"';
+                    throw new Error(errorMessage);
+                }
+
                 result[typeName] = {
                     name: typeName,
                     value: argumentList[i],
@@ -138,19 +146,24 @@ var signetValidator = (function () {
             return result;
         }
 
-        function arrayOrDefault (value) {
+        function arrayOrDefault(value) {
             var typeOk = Object.prototype.toString.call(value) === '[object Array]';
             return typeOk ? value : [];
         }
 
-        function validateArguments(typeList) {
+        function validateArguments(typeList, environment) {
             var dependentExpressions = arrayOrDefault(typeList.dependent);
 
             return function (argumentList) {
-                var namedArgs = buildNamedArgs(typeList, argumentList);
+                var startingEnvironment = typeof environment === 'undefined'
+                    ? typeList.environment
+                    : environment;
+
+                var environmentTable = buildEnvironmentTable(typeList, argumentList, startingEnvironment);
+                var checkDependentType = checkDependentTypes(environmentTable);
+
                 var validationState = typeList.length === 0 ? null : validateCurrentValue(typeList, argumentList);
 
-                var checkDependentType = checkDependentTypes(namedArgs);
 
                 dependentExpressions.forEach(function (dependent) {
                     validationState = checkDependentType(dependent, validationState);
@@ -162,7 +175,8 @@ var signetValidator = (function () {
 
         return {
             validateArguments: validateArguments,
-            validateType: validateType
+            validateType: validateType,
+            buildEnvironment: buildEnvironmentTable
         };
     };
 

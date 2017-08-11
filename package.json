@@ -1,6 +1,6 @@
 {
   "name": "signet-validator",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "Value type validation package for signet",
   "main": "index.js",
   "directories": {
@@ -14,6 +14,19 @@
     "signet",
     "validation"
   ],
+  "quokka": {
+    "plugins": [
+      "quokka-mocha-bdd",
+      "quokka-signet-explorer",
+      "quokka-prerun"
+    ],
+    "quokka-mocha-bdd": {
+      "interface": "bdd"
+    },
+    "quokka-prerun": {
+      "prerunCommands": []
+    }
+  },
   "author": "Chris Stead <cmstead@gmail.com> (http://www.chrisstead.com/)",
   "license": "MPL-2.0",
   "devDependencies": {
@@ -21,6 +34,10 @@
     "chai": "^3.5.0",
     "eslint": "^3.19.0",
     "mocha": "^3.1.2",
+    "quokka-mocha-bdd": "^1.1.0",
+    "quokka-prerun": "^1.0.0",
+    "quokka-signet-explorer": "^1.0.1",
+    "quokka-mocha-approvals-helper": "^1.0.0",
     "signet-assembler": "^1.0.0",
     "signet-parser": "^5.0.0",
     "signet-registrar": "^1.0.0",

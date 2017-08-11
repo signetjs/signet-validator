@@ -4,8 +4,10 @@ var fs = require('fs');
 var spawn = require('child_process').spawn;
 var approvals = require('approvals');
 
+require('quokka-mocha-approvals-helper')();
+
 var approvalsConfig = {
-  reporters:  ['kdiff3'],
+  reporters:  [chooseReporter('kdiff3')],
   normalizeLineEndingsTo: '\n', // default
   appendEOL: true,
   EOL:  require('os').EOL,
