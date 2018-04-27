@@ -33,10 +33,10 @@ var signetValidator = (function () {
             return accepted ? validateNext(nextArgs) : [assembler.assembleType(typeDef), argument];
         }
 
-        function getValidationState(left, right, operatorDef) {
+        function getValidationState(left, right, operatorDef, dependent) {
             var validationState = null;
 
-            if (!operatorDef.operation(left.value, right.value, left.typeNode, right.typeNode)) {
+            if (!operatorDef.operation(left.value, right.value, left.typeNode, right.typeNode, dependent)) {
                 var typeInfo = [left.name, operatorDef.operator, right.name];
                 var typeDef = typeInfo.join(' ');
                 var valueInfo = [left.name, '=', left.value, 'and', right.name, '=', right.value];
@@ -96,8 +96,13 @@ var signetValidator = (function () {
 
         function checkDependentTypes(namedArgs) {
             return function (dependent, validationState) {
-                var left = namedArgs[dependent.left];
-                var right = getRightArg(namedArgs, dependent.right);
+                dependent.leftTokens = dependent.left.split(':');
+                dependent.rightTokens = dependent.right.split(':');
+
+                var leftName = dependent.leftTokens[0];
+                var left = namedArgs[leftName];
+                var rightName = dependent.rightTokens[0];
+                var right = getRightArg(namedArgs, rightName);
 
                 var newValidationState = null;
 
@@ -108,7 +113,7 @@ var signetValidator = (function () {
                 if (validationState === null && namedValuesExist) {
                     var operatorDef = getDependentOperator(left.typeNode.type, dependent.operator);
 
-                    newValidationState = getValidationState(left, right, operatorDef);
+                    newValidationState = getValidationState(left, right, operatorDef, dependent);
                 }
 
                 return newValidationState === null ? validationState : newValidationState;
